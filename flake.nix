@@ -7,29 +7,46 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"] (system:
+    let
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
+      targets = [
+        "x86_64-linux" "x86_64-darwin" "x86_64-windows"
+        "aarch64-linux" "aarch64-darwin" "aarch64-windows"
+      ];
+    in
+    flake-utils.lib.eachSystem systems (system:
       let
         pkgs = import nixpkgs { inherit system; };
         bin2x2 = import ./default.nix { inherit pkgs; };
-        allTests = builtins.concatMap
-          (impl: builtins.concatMap
-            (target: builtins.map
-              (os: bin2x2.buildTest ({ inherit (impl) name src; inherit target os; }))
-              bin2x2.oses)
-            bin2x2.targets)
-          bin2x2.impls;
+
+        crossPkgs = builtins.listToAttrs (map (target: {
+          name = target;
+          value = import nixpkgs {
+            inherit system;
+            crossSystem = pkgs.lib.systems.elaborate target;
+          };
+        }) targets);
+
+        buildAllTests = builtins.mapAttrs (target: crossPkgs':
+          bin2x2.buildAllTests { 
+            stdenv = crossPkgs'.stdenv; 
+            doCheck = false;
+          }
+        ) crossPkgs;
+
+        buildAllTestsNative = bin2x2.buildAllTests { stdenv = pkgs.stdenv; };
+
       in {
         packages = {
-          default = bin2x2.buildAllTests;
-        } // builtins.listToAttrs (map (test: { name = test.name; value = test; }) allTests);
+          default = buildAllTestsNative;
+        } // buildAllTests;
 
-        apps = builtins.listToAttrs (map (test: {
-          name = test.name;
-          value = {
-            type = "app";
-            program = "${test}/bin/${builtins.baseNameOf test.name}";
-          };
-        }) allTests);
+        apps = builtins.mapAttrs (name: package: {
+          type = "app";
+          program = "${package}/bin/${builtins.head (builtins.attrNames (builtins.readDir "${package}/bin"))}";
+        }) buildAllTests;
+
+        devShells.default = import ./shell.nix { inherit pkgs; };
       }
     );
 }
