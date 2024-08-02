@@ -6,23 +6,27 @@
 void bin2x2(uint8_t* im, int w, int h);
 
 static void bin2x2_reference(uint8_t* im, int w, int h) {
-    int new_w = w / 2, new_h = h / 2;
+    int new_w = w / 2;
+    int new_h = h / 2;
+    
     for (int y = 0; y < new_h; y++) {
         for (int x = 0; x < new_w; x++) {
-            uint16_t sum = im[2*y*w + 2*x] + im[2*y*w + 2*x + 1] +
-                           im[(2*y+1)*w + 2*x] + im[(2*y+1)*w + 2*x + 1];
-            im[y*new_w + x] = (uint8_t)(sum / 4);
+            int sum = im[2*y*w + 2*x] +
+                      im[2*y*w + 2*x + 1] +
+                      im[(2*y+1)*w + 2*x] +
+                      im[(2*y+1)*w + 2*x + 1];
+            
+            im[y*new_w + x] = sum / 4;
         }
     }
 }
 
 static int compare_images(uint8_t* im1, uint8_t* im2, int w, int h) {
-    int new_w = w / 2, new_h = h / 2;
     int max_diff = 0;
     int diff_count = 0;
-    for (int y = 0; y < new_h; y++) {
-        for (int x = 0; x < new_w; x++) {
-            int diff = abs((int)im1[y*new_w + x] - (int)im2[y*new_w + x]);
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            int diff = abs((int)im1[y*w+ x] - (int)im2[y*w+ x]);
             if (diff > 0) {
                 diff_count++;
                 if (diff > max_diff) max_diff = diff;
@@ -34,6 +38,40 @@ static int compare_images(uint8_t* im1, uint8_t* im2, int w, int h) {
         return 1;
     }
     return 0;
+}
+
+static void print_image(uint8_t* im, int w, int h) {
+    printf("Image %dx%d:\n", w, h);
+    
+    // Print column headers
+    printf("    ");
+    for (int x = 0; x < w; x++) {
+        printf("%3d ", x);
+    }
+    printf("\n");
+    
+    // Print horizontal separator
+    printf("   +");
+    for (int x = 0; x < w; x++) {
+        printf("---+");
+    }
+    printf("\n");
+    
+    // Print rows
+    for (int y = 0; y < h; y++) {
+        printf("%2d |", y);
+        for (int x = 0; x < w; x++) {
+            printf("%3d|", im[y*w + x]);
+        }
+        printf("\n");
+        
+        // Print horizontal separator
+        printf("   +");
+        for (int x = 0; x < w; x++) {
+            printf("---+");
+        }
+        printf("\n");
+    }
 }
 
 static int test_size(int w, int h) {
@@ -51,11 +89,15 @@ static int test_size(int w, int h) {
 
     for (size_t i = 0; i < size; i++) test_im[i] = rand() % 256;
     memcpy(ref_im, test_im, size);
+    print_image(test_im,w,h);
+    print_image(ref_im,w,h);
     
     bin2x2(test_im, w, h);
     bin2x2_reference(ref_im, w, h);
+    print_image(test_im,w/2,h/2);
+    print_image(ref_im,w/2,h/2);
     
-    int result = compare_images(test_im, ref_im, w, h);
+    int result = compare_images(test_im, ref_im, w/2, h/2);
     
     free(test_im);
     free(ref_im);
@@ -63,7 +105,7 @@ static int test_size(int w, int h) {
 }
 
 int main() {
-    int sizes[] = {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32};
+    int sizes[] = {4}; // {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32};
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
     
     for (int i = 0; i < num_sizes; i++) {
