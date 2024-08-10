@@ -17,6 +17,7 @@ in
 
       fish
       fzf
+      ripgrep
     ];
 
     shellHook = ''

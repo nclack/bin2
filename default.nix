@@ -15,8 +15,10 @@ let
       version = "0.1.0";
       src = ./.;
 
+      enableDebugging=true;
+      dontStrip=true;
       buildPhase = ''
-        $CC -O3 ${extraFlags} -o bin2x2_test_${name} test/test.c src/${src}
+        $CC -O0 -g ${extraFlags} -o bin2x2_test_${name} test/test.c src/${src}
       '';
 
       checkPhase = ''

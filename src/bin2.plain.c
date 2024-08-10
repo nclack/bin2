@@ -8,7 +8,7 @@ bin2x2(uint8_t* im_, int w, int h)
 
     // horizontal
     for (uint8_t* row = im_; row < end; row += w) {
-        const uint8_t* row_end = im_ + w;
+        const uint8_t* row_end = row + w;
         for (uint8_t* p = row; p < row_end; p += 2) {
             p[0] = (uint8_t)(((uint16_t)p[0] + (uint16_t)p[1])>>1);
         }
@@ -16,18 +16,16 @@ bin2x2(uint8_t* im_, int w, int h)
             *p = *s;
         }
     }
-#if 0
     // vertical
     for (uint8_t* row = im_ + w; row < end; row += 2 * w) {
-        const uint8_t* row_end = im_ + w/2;
+        const uint8_t* row_end = row + w/2;
         for (uint8_t* p = row; p < row_end; ++p) {
-            p[0] = (uint8_t)(((uint16_t)p[0] + (uint16_t)p[w])>>1);
+            p[-w] = (uint8_t)(((uint16_t)p[0] + (uint16_t)p[-w])>>1);
         }
     }
     for (uint8_t *src_row = im_, *dst_row = im_; src_row < end;
-         src_row += 2 * w, dst_row += w) {
+         src_row += 2 * w, dst_row += w/2) {
         memcpy(dst_row, src_row, w/2);
     }
-#endif
 }
 
