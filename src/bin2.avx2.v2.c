@@ -34,6 +34,7 @@ void bin2x2(uint8_t* im_, int w, int h)
         // Process two vectors at once
         __m256i b0 = _mm256_srli_epi16(im[x], 8);
         __m256i b1 = _mm256_srli_epi16(im[x + 1], 8);
+        // this is a rounding add
         __m256i v0 = _mm256_avg_epu8(im[x], b0);
         __m256i v1 = _mm256_avg_epu8(im[x + 1], b1);
         im[x] = _mm256_and_si256(v0, mask);

@@ -13,15 +13,18 @@ static void bin2x2_reference(uint8_t* im, int w, int h) {
     
     for (int y = 0; y < new_h; y++) {
         for (int x = 0; x < new_w; x++) {
-            int sum = im[2*y*w + 2*x] +
+            const int a=
+                im[2*y*w + 2*x] +
+                im[(2*y+1)*w + 2*x] + 1;
+            const int b=
                       im[2*y*w + 2*x + 1] +
-                      im[(2*y+1)*w + 2*x] +
-                      im[(2*y+1)*w + 2*x + 1];
+                      im[(2*y+1)*w + 2*x + 1] +1;
             
-            im[y*new_w + x] = sum / 4;
+            im[y*new_w + x] = ((a/2)+(b/2)+1)/2;
         }
     }
 }
+
 
 static int compare_images(uint8_t* im1, uint8_t* im2, int w, int h) {
     int max_diff = 0;
@@ -32,7 +35,9 @@ static int compare_images(uint8_t* im1, uint8_t* im2, int w, int h) {
             if (diff > 0) {
                 diff_count++;
                 if (diff > max_diff) max_diff = diff;
-                printf("Difference (%d,%d)\n",x,y);
+                if(diff_count<10) {
+                    printf("Difference: (%d,%d)=%d\n",x,y,diff);
+                }
             }
         }
     }
@@ -44,8 +49,8 @@ static int compare_images(uint8_t* im1, uint8_t* im2, int w, int h) {
 }
 
 static void print_image(const char* name, uint8_t* im, int w, int h) {
-    const int pw=min(w,16);
-    const int ph=min(h,16);
+    const int pw=min(w,64);
+    const int ph=min(h,64);
     printf("Image %dx%d: %s\n", w, h, name);
     
     // Print column headers
@@ -97,6 +102,7 @@ static int test_size(int w, int h) {
     print_image("input",ref_im,w,h);
     
     bin2x2(test_im, w, h);
+    // reference_row_average(ref_im,w,h);
     bin2x2_reference(ref_im, w, h);
     print_image("test",test_im,w/2,h/2);
     print_image("ref",ref_im,w/2,h/2);
@@ -109,7 +115,7 @@ static int test_size(int w, int h) {
 }
 
 int main() {
-    int sizes[] = {128}; // {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32};
+    int sizes[] = {64}; // {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32};
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
     
     for (int i = 0; i < num_sizes; i++) {
