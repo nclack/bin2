@@ -99,13 +99,12 @@ static int test_size(int w, int h) {
 
     for (size_t i = 0; i < size; i++) test_im[i] = rand() % 256;
     memcpy(ref_im, test_im, size);
-    print_image("input",ref_im,w,h);
+    // print_image("input",ref_im,w,h);
     
     bin2x2(test_im, w, h);
-    // reference_row_average(ref_im,w,h);
     bin2x2_reference(ref_im, w, h);
-    print_image("test",test_im,w/2,h/2);
-    print_image("ref",ref_im,w/2,h/2);
+    // print_image("test",test_im,w/2,h/2);
+    // print_image("ref",ref_im,w/2,h/2);
     
     int result = compare_images(test_im, ref_im, w/2, h/2);
     
@@ -115,7 +114,7 @@ static int test_size(int w, int h) {
 }
 
 int main() {
-    int sizes[] = {64}; // {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32};
+    int sizes[] = {8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16};
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
     
     for (int i = 0; i < num_sizes; i++) {
